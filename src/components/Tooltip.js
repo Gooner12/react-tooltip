@@ -131,7 +131,10 @@ function Tooltip({
   space = 15,
   children,
   disabled = 0,
+  clickable = 0,
   delay,
+  initialText,
+  finalText
 }) {
   const [show, setShow] = useState(0);
   const positionRef = useRef({ x: 0, y: 0 }); // this object changes based on the position of object and mouse. It influences the top and left of the styled component
@@ -149,14 +152,30 @@ function Tooltip({
 
   const mouseOutHandler = () => {
     setShow(0)};
+
+  const clickHandler = (event) => {
+    setShow(!show);
+    if(!show) 
+    event.currentTarget.textContent = finalText
+    else 
+    event.currentTarget.textContent = initialText
+    positionRef.current = getCoordinates(
+      event.currentTarget,
+      tooltipRef.current,
+      placement,
+      space
+    );
+  }  
   return (
     <>
       {disabled
-        ? children
+        ? children : (clickable ? React.cloneElement(children, {
+          onClick: clickHandler
+        })
         : React.cloneElement(children, {
             onMouseOver: mouseOverHandler,
             onMouseOut: mouseOutHandler,
-          })}
+          }))}
       {/* adding props to the original elements cloning the original elements */}
       {disabled || (
         <Portal>

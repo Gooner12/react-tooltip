@@ -17,8 +17,14 @@ function MainPage() {
           <Tooltip text="First tooltip" placement="bottom">
             <button>First Button</button>
           </Tooltip>
-          <Tooltip text={<HoverComponent />} placement="top">
-            <button>Component Tooltip</button>
+          <Tooltip
+            text={<HoverComponent />}
+            placement="top"
+            clickable={1}
+            initialText="Show Clickable Circle"
+            finalText="Remove Component"
+          >
+            <button>Show Clickable Circle</button>
           </Tooltip>
           <Tooltip text="Last tooltip" placement="bottom">
             <button>Recursion Example</button>
