@@ -1,0 +1,15 @@
+.component_container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 50px;
+}
+
+.circle {
+    height: 15px;
+    width: 15px;
+    background-color: green;
+    border-radius: 50%;
+}
