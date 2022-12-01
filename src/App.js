@@ -1,11 +1,15 @@
 import MainPage from "./components/MainPage";
+import GlobalStyle from "./styles";
 
-function App () {
-    return (
+function App() {
+  return (
+    <>
+      <GlobalStyle />
         <div>
-            <MainPage />
+          <MainPage />
         </div>
-    )
+    </>
+  );
 }
 
 export default App;

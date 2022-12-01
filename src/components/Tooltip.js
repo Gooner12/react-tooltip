@@ -3,7 +3,7 @@ import Portal from "./Portal";
 import styled from "styled-components";
 
 const StyledTooltip = styled.span.attrs((props) => ({
-  delay: props.delay || 0.01
+  delay: props.delay || 0.01,
 }))`
   position: fixed;
   top: ${(props) => props.positionRef.current.y}px;
@@ -11,20 +11,35 @@ const StyledTooltip = styled.span.attrs((props) => ({
   font-size: 0.5rem;
   font-weight: bold;
   letter-spacing: 0.02em;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: var(--tooltip-color);
   color: white;
   white-space: nowrap;
   display: inline-block;
   border-radius: 5px;
   z-index: 10000;
-  padding: 7px 10px;
-  opacity: ${(props) => props.state ? 1 : 0};
+  padding: var(--padding);
+  opacity: ${(props) => (props.state ? 1 : 0)};
   transition-duration: 0.06s !important;
   transition-timing-function: cubic-bezier(0.49, 0.04, 0.17, 0.79) !important;
-  transition-delay: ${(props) => (props.state ? props.delay : 0.02)}s !important;
+  transition-delay: ${(props) =>
+    props.state ? props.delay : 0.02}s !important;
   transform-origin: ${(props) => position(props.placement).flip()};
-  transform: scale(${(props) => ((props.state) ? 1 : 0.7)});
+  transform: scale(${(props) => (props.state ? 1 : 0.7)});
   transition-property: transform, opacity !important;
+
+  &:before {
+    content: "";
+    position: absolute;
+    transform: translateX(${(props) => props.translateXRef.current}%)
+      translateY(${(props) => props.translateYRef.current}%)
+      rotate(${(props) => props.rotationRef.current}deg);
+    top: ${(props) => props.topRef.current}%;
+    bottom: ${(props) => props.bottomRef.current}%;
+    left: ${(props) => props.leftRef.current}%;
+    right: ${(props) => props.rightRef.current}%;
+    border: var(--arrow-size) solid transparent;
+    border-bottom-color: var(--tooltip-color);
+  }
 `;
 
 const position = (placement) => ({
@@ -61,7 +76,13 @@ const coordinateSetter = () => ({
 });
 
 // this function calculates x and y and return the final result
-const getCoordinates = (element, tooltip, placement, space) => {
+const getCoordinates = (
+  element,
+  tooltip,
+  placement,
+  space,
+  tooltipPosition
+) => {
   let recursionCount = 0;
   const coordinate = coordinateSetter();
   const tooltipZone = {
@@ -83,6 +104,7 @@ const getCoordinates = (element, tooltip, placement, space) => {
         coordinate.y =
           elementRectangle.top +
           (element.offsetHeight - tooltip.offsetHeight) / 2;
+        tooltipPosition(90, 0, -50, 50, null, 100, null);
         break;
 
       case "right":
@@ -90,6 +112,7 @@ const getCoordinates = (element, tooltip, placement, space) => {
         coordinate.y =
           elementRectangle.top +
           (element.offsetHeight - tooltip.offsetHeight) / 2;
+        tooltipPosition(270, 0, -50, 50, null, null, 100);
         break;
 
       case "top":
@@ -97,13 +120,15 @@ const getCoordinates = (element, tooltip, placement, space) => {
           elementRectangle.left +
           (element.offsetWidth - tooltip.offsetWidth) / 2;
         coordinate.y = elementRectangle.top - (tooltip.offsetHeight + space);
+        tooltipPosition(180, -50, 0, 100, null, 50, null);
         break;
 
-      default:
+      default: // positioning the tooltip below the element
         coordinate.x =
           elementRectangle.left +
           (element.offsetWidth - tooltip.offsetWidth) / 2;
-        coordinate.y = elementRectangle.bottom + space; // positioning the tooltip below the element
+        coordinate.y = elementRectangle.bottom + space;
+        tooltipPosition(0, -50, 0, null, 100, 50, null);
     }
 
     // limiting the number of recursive call to maximum of 3 times
@@ -134,11 +159,37 @@ function Tooltip({
   clickable = 0,
   delay,
   initialText,
-  finalText
+  finalText,
 }) {
-  const [show, setShow] = useState(0);
+  const [show, setShow] = useState(1);
   const positionRef = useRef({ x: 0, y: 0 }); // this object changes based on the position of object and mouse. It influences the top and left of the styled component
   const tooltipRef = useRef();
+  const rotationRef = useRef(null);
+  const translateXRef = useRef(null);
+  const translateYRef = useRef(null);
+  const topRef = useRef(null);
+  const bottomRef = useRef(null);
+  const leftRef = useRef(null);
+  const rightRef = useRef(null);
+
+  // sets the position of the tooltip
+  const tooltipPosition = (
+    rotation,
+    translateX,
+    translateY,
+    top,
+    bottom,
+    left,
+    right
+  ) => {
+    rotationRef.current = rotation;
+    translateXRef.current = translateX;
+    translateYRef.current = translateY;
+    topRef.current = top;
+    bottomRef.current = bottom;
+    leftRef.current = left;
+    rightRef.current = right;
+  };
 
   const mouseOverHandler = (event) => {
     setShow(1);
@@ -146,36 +197,40 @@ function Tooltip({
       event.currentTarget,
       tooltipRef.current,
       placement,
-      space
+      space,
+      tooltipPosition
     );
   };
 
   const mouseOutHandler = () => {
-    setShow(0)};
+    setShow(0);
+  };
 
   const clickHandler = (event) => {
     setShow(!show);
-    if(!show) 
-    event.currentTarget.textContent = finalText
-    else 
-    event.currentTarget.textContent = initialText
+    if (!show) event.currentTarget.textContent = finalText;
+    else event.currentTarget.textContent = initialText;
     positionRef.current = getCoordinates(
       event.currentTarget,
       tooltipRef.current,
       placement,
-      space
+      space,
+      tooltipPosition
     );
-  }  
+  };
   return (
     <>
       {disabled
-        ? children : (clickable ? React.cloneElement(children, {
-          onClick: clickHandler
-        })
+        ? children
+        : clickable
+        ? React.cloneElement(children, {
+            onClick: clickHandler,
+          })
         : React.cloneElement(children, {
             onMouseOver: mouseOverHandler,
             onMouseOut: mouseOutHandler,
-          }))}
+          })}
+
       {/* adding props to the original elements cloning the original elements */}
       {disabled || (
         <Portal>
@@ -184,6 +239,13 @@ function Tooltip({
             ref={tooltipRef}
             positionRef={positionRef}
             state={show}
+            rotationRef={rotationRef}
+            translateXRef={translateXRef}
+            translateYRef={translateYRef}
+            topRef={topRef}
+            bottomRef={bottomRef}
+            rightRef={rightRef}
+            leftRef={leftRef}
           >
             {text}
           </StyledTooltip>
