@@ -37,7 +37,7 @@ const StyledTooltip = styled.span.attrs((props) => ({
     bottom: ${(props) => props.bottomRef.current}%;
     left: ${(props) => props.leftRef.current}%;
     right: ${(props) => props.rightRef.current}%;
-    border: var(--arrow-size) solid transparent;
+    border: ${(props) => (props.arrow) ? "var(--arrow-size) solid transparent" : 0};
     border-bottom-color: var(--tooltip-color);
   }
 `;
@@ -160,8 +160,10 @@ function Tooltip({
   delay,
   initialText,
   finalText,
+  arrow = 0,
+  closeAfter = null
 }) {
-  const [show, setShow] = useState(1);
+  const [show, setShow] = useState(0);
   const positionRef = useRef({ x: 0, y: 0 }); // this object changes based on the position of object and mouse. It influences the top and left of the styled component
   const tooltipRef = useRef();
   const rotationRef = useRef(null);
@@ -191,6 +193,15 @@ function Tooltip({
     rightRef.current = right;
   };
 
+  const closeTooltip = (timeInMS) => {
+    if (timeInMS) {
+    setTimeout(() => {
+      setShow(0)
+    }, timeInMS);
+  }
+  return;
+  }
+
   const mouseOverHandler = (event) => {
     setShow(1);
     positionRef.current = getCoordinates(
@@ -200,6 +211,7 @@ function Tooltip({
       space,
       tooltipPosition
     );
+    closeTooltip(closeAfter);
   };
 
   const mouseOutHandler = () => {
@@ -217,6 +229,10 @@ function Tooltip({
       space,
       tooltipPosition
     );
+    closeTooltip(closeAfter);
+    setTimeout(() => {
+      if(!show) event.target.textContent = initialText;
+    }, closeAfter + 20)
   };
   return (
     <>
@@ -246,6 +262,7 @@ function Tooltip({
             bottomRef={bottomRef}
             rightRef={rightRef}
             leftRef={leftRef}
+            arrow={arrow}
           >
             {text}
           </StyledTooltip>

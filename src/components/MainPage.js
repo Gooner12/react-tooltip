@@ -7,7 +7,7 @@ function MainPage() {
     <div className={classes.main_grid}>
       <div className={classes.side_grid}>
         <div className={classes.side_button_container}>
-          <Tooltip text="First tooltip" placement="left">
+          <Tooltip text="First tooltip" placement="left" arrow={1}>
             <button>Side Button</button>
           </Tooltip>
         </div>
@@ -23,6 +23,7 @@ function MainPage() {
             clickable={1}
             initialText="Show Clickable Circle"
             finalText="Remove Component"
+            closeAfter={1500}
           >
             <button>Show Clickable Circle</button>
           </Tooltip>
