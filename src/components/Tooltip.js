@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import Portal from "./Portal";
 import styled from "styled-components";
+import { getSelectedText } from "../utils/TextFunctions";
 
 const StyledTooltip = styled.span.attrs((props) => ({
   delay: props.delay || 0.01,
@@ -37,7 +38,8 @@ const StyledTooltip = styled.span.attrs((props) => ({
     bottom: ${(props) => props.bottomRef.current}%;
     left: ${(props) => props.leftRef.current}%;
     right: ${(props) => props.rightRef.current}%;
-    border: ${(props) => (props.arrow) ? "var(--arrow-size) solid transparent" : 0};
+    border: ${(props) =>
+      props.arrow ? "var(--arrow-size) solid transparent" : 0};
     border-bottom-color: var(--tooltip-color);
   }
 `;
@@ -81,8 +83,13 @@ const getCoordinates = (
   tooltip,
   placement,
   space,
-  tooltipPosition
+  tooltipPosition,
+  ...selectionArgs
 ) => {
+  const selectionArgument = selectionArgs.length;
+  if (selectionArgument === 3) {
+    var [interaction, event, range] = selectionArgs;
+  }
   let recursionCount = 0;
   const coordinate = coordinateSetter();
   const tooltipZone = {
@@ -98,40 +105,75 @@ const getCoordinates = (
     recursionCount++;
     const retrievedPosition = position(originalPlacement);
 
-    switch (retrievedPosition.current) {
-      case "left":
-        coordinate.x = elementRectangle.left - (tooltip.offsetWidth + space);
-        coordinate.y =
-          elementRectangle.top +
-          (element.offsetHeight - tooltip.offsetHeight) / 2;
-        tooltipPosition(90, 0, -50, 50, null, 100, null);
-        break;
+    if (interaction === "select") {
+      switch (retrievedPosition.current) {
+        case "left":
+          coordinate.x =
+            range.getBoundingClientRect().left - (tooltip.offsetWidth + space);
+          coordinate.y =
+            range.getBoundingClientRect().top -
+            (tooltip.offsetHeight - range.getBoundingClientRect().height) / 2;
+            tooltipPosition(90, 0, -50, 50, null, 100, null);
+          break;
+        case "right":
+          coordinate.x = range.getBoundingClientRect().right + space;
+          coordinate.y =
+            range.getBoundingClientRect().top -
+            (tooltip.offsetHeight - range.getBoundingClientRect().height) / 2;
+            tooltipPosition(270, 0, -50, 50, null, null, 100);
+          break;
+        case "bottom":
+          coordinate.x =
+            range.getBoundingClientRect().left -
+            (tooltip.offsetWidth - range.getBoundingClientRect().width) / 2;
+          coordinate.y = range.getBoundingClientRect().bottom + space;
+          tooltipPosition(0, -50, 0, null, 100, 50, null);
+          break;
+        default:
+          coordinate.x =
+            range.getBoundingClientRect().left -
+            (tooltip.offsetWidth - range.getBoundingClientRect().width) / 2;
+          coordinate.y =
+            range.getBoundingClientRect().top - (tooltip.offsetHeight + space);
+            tooltipPosition(180, -50, 0, 100, null, 50, null);
+          break;
+      }
+    } else {
+      switch (retrievedPosition.current) {
+        case "left":
+          coordinate.x = elementRectangle.left - (tooltip.offsetWidth + space);
+          coordinate.y =
+            elementRectangle.top +
+            (element.offsetHeight - tooltip.offsetHeight) / 2;
+          tooltipPosition(90, 0, -50, 50, null, 100, null);
+          break;
 
-      case "right":
-        coordinate.x = elementRectangle.right + space;
-        coordinate.y =
-          elementRectangle.top +
-          (element.offsetHeight - tooltip.offsetHeight) / 2;
-        tooltipPosition(270, 0, -50, 50, null, null, 100);
-        break;
+        case "right":
+          coordinate.x = elementRectangle.right + space;
+          coordinate.y =
+            elementRectangle.top +
+            (element.offsetHeight - tooltip.offsetHeight) / 2;
+          tooltipPosition(270, 0, -50, 50, null, null, 100);
+          break;
 
-      case "top":
-        coordinate.x =
-          elementRectangle.left +
-          (element.offsetWidth - tooltip.offsetWidth) / 2;
-        coordinate.y = elementRectangle.top - (tooltip.offsetHeight + space);
-        tooltipPosition(180, -50, 0, 100, null, 50, null);
-        break;
+        case "top":
+          coordinate.x =
+            elementRectangle.left +
+            (element.offsetWidth - tooltip.offsetWidth) / 2;
+          coordinate.y = elementRectangle.top - (tooltip.offsetHeight + space);
+          tooltipPosition(180, -50, 0, 100, null, 50, null);
+          break;
 
-      default: // positioning the tooltip below the element
-        coordinate.x =
-          elementRectangle.left +
-          (element.offsetWidth - tooltip.offsetWidth) / 2;
-        coordinate.y = elementRectangle.bottom + space;
-        tooltipPosition(0, -50, 0, null, 100, 50, null);
+        default: // positioning the tooltip below the element
+          coordinate.x =
+            elementRectangle.left +
+            (element.offsetWidth - tooltip.offsetWidth) / 2;
+          coordinate.y = elementRectangle.bottom + space;
+          tooltipPosition(0, -50, 0, null, 100, 50, null);
+      }
     }
 
-    // limiting the number of recursive call to maximum of 3 times
+    // limiting the number of recursive call to a maximum of 3 times
     if (recursionCount < 3) {
       // checking if we need to flip the position of the tooltip based on the tooltip zone or the boundary
       if (
@@ -156,12 +198,10 @@ function Tooltip({
   space = 15,
   children,
   disabled = 0,
-  clickable = 0,
+  interaction,
   delay,
-  initialText,
-  finalText,
   arrow = 0,
-  closeAfter = null
+  closeAfter = null,
 }) {
   const [show, setShow] = useState(0);
   const positionRef = useRef({ x: 0, y: 0 }); // this object changes based on the position of object and mouse. It influences the top and left of the styled component
@@ -173,6 +213,7 @@ function Tooltip({
   const bottomRef = useRef(null);
   const leftRef = useRef(null);
   const rightRef = useRef(null);
+  const timerRef = useRef();
 
   // sets the position of the tooltip
   const tooltipPosition = (
@@ -194,13 +235,13 @@ function Tooltip({
   };
 
   const closeTooltip = (timeInMS) => {
+    clearTimeout(timerRef.current);
     if (timeInMS) {
-    setTimeout(() => {
-      setShow(0)
-    }, timeInMS);
-  }
-  return;
-  }
+      timerRef.current = setTimeout(() => {
+        setShow(0);
+      }, timeInMS);
+    }
+  };
 
   const mouseOverHandler = (event) => {
     setShow(1);
@@ -220,8 +261,7 @@ function Tooltip({
 
   const clickHandler = (event) => {
     setShow(!show);
-    if (!show) event.currentTarget.textContent = finalText;
-    else event.currentTarget.textContent = initialText;
+
     positionRef.current = getCoordinates(
       event.currentTarget,
       tooltipRef.current,
@@ -230,17 +270,43 @@ function Tooltip({
       tooltipPosition
     );
     closeTooltip(closeAfter);
-    setTimeout(() => {
-      if(!show) event.target.textContent = initialText;
-    }, closeAfter + 20)
   };
+
+  const selectHandler = (event) => {
+    const [text, range, selection] = getSelectedText();
+    if (text && selection.focusOffset > 0) {
+      positionRef.current = getCoordinates(
+        event.currentTarget,
+        tooltipRef.current,
+        placement,
+        space,
+        tooltipPosition,
+        interaction,
+        event,
+        range
+      );
+      setShow(1);
+      closeTooltip(closeAfter);
+    }
+  };
+
+  const clearHandler = () => {
+    getSelectedText(true);
+    setShow(0);
+  };
+
   return (
     <>
       {disabled
         ? children
-        : clickable
+        : interaction === "click"
         ? React.cloneElement(children, {
             onClick: clickHandler,
+          })
+        : interaction === "select"
+        ? React.cloneElement(children, {
+            onMouseUp: selectHandler,
+            onMouseDown: clearHandler,
           })
         : React.cloneElement(children, {
             onMouseOver: mouseOverHandler,

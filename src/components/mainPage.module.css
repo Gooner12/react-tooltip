@@ -36,3 +36,19 @@
 .button_container button:nth-child(3) {
     height: 200px;
 }
+
+.text_field {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.text_field div {
+    font-size: 1rem;
+    resize: none;
+    cursor: text;
+    box-sizing: border-box;
+    border: 1.5px solid grey;
+    height: 40px;
+    width: 80%;
+}
