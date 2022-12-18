@@ -33,9 +33,9 @@ function MainPage() {
             text={<HoverComponent />}
             placement="top"
             interaction="click"
-            closeAfter={3500}
+            closeAfter={4500}
           >
-            <button>Show Clickable Circle</button>
+            <button>Interactable Tooltip</button>
           </Tooltip>
           <Tooltip text="Last tooltip" placement="bottom">
             <button>Recursion Example</button>

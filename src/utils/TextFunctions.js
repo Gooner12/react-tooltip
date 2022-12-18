@@ -8,7 +8,7 @@ export const getSelectedText = (removeRange) => {
   const range = selection.getRangeAt(0);
   selection.removeAllRanges();
   selection.addRange(range);
-  console.log(selection);
+  // console.log(selection);
   return [range.toString(), range, selection];
 };
 

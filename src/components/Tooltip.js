@@ -20,13 +20,14 @@ const StyledTooltip = styled.span.attrs((props) => ({
   z-index: 10000;
   padding: var(--padding);
   opacity: ${(props) => (props.state ? 1 : 0)};
+  visibility: ${(props) => (props.state ? "visible" : "hidden")};
   transition-duration: 0.06s !important;
   transition-timing-function: cubic-bezier(0.49, 0.04, 0.17, 0.79) !important;
   transition-delay: ${(props) =>
     props.state ? props.delay : 0.02}s !important;
   transform-origin: ${(props) => position(props.placement).flip()};
   transform: scale(${(props) => (props.state ? 1 : 0.7)});
-  transition-property: transform, opacity !important;
+  transition-property: transform, opacity, visibility !important;
 
   &:before {
     content: "";
@@ -77,7 +78,7 @@ const coordinateSetter = () => ({
   },
 });
 
-// this function calculates x and y and return the final result
+// this function calculates x and y and returns the final result
 const getCoordinates = (
   element,
   tooltip,
@@ -87,8 +88,8 @@ const getCoordinates = (
   ...selectionArgs
 ) => {
   const selectionArgument = selectionArgs.length;
-  if (selectionArgument === 3) {
-    var [interaction, event, range] = selectionArgs;
+  if (selectionArgument === 2) {
+    var [interaction, range] = selectionArgs;
   }
   let recursionCount = 0;
   const coordinate = coordinateSetter();
@@ -115,6 +116,7 @@ const getCoordinates = (
             (tooltip.offsetHeight - range.getBoundingClientRect().height) / 2;
             tooltipPosition(90, 0, -50, 50, null, 100, null);
           break;
+
         case "right":
           coordinate.x = range.getBoundingClientRect().right + space;
           coordinate.y =
@@ -122,6 +124,7 @@ const getCoordinates = (
             (tooltip.offsetHeight - range.getBoundingClientRect().height) / 2;
             tooltipPosition(270, 0, -50, 50, null, null, 100);
           break;
+
         case "bottom":
           coordinate.x =
             range.getBoundingClientRect().left -
@@ -129,6 +132,7 @@ const getCoordinates = (
           coordinate.y = range.getBoundingClientRect().bottom + space;
           tooltipPosition(0, -50, 0, null, 100, 50, null);
           break;
+          
         default:
           coordinate.x =
             range.getBoundingClientRect().left -
@@ -282,7 +286,6 @@ function Tooltip({
         space,
         tooltipPosition,
         interaction,
-        event,
         range
       );
       setShow(1);

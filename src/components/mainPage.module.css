@@ -29,8 +29,14 @@
     justify-content: space-between;
 }
 
-.button_container button {
-    height: 20px;
+.button_container button, .side_button_container button {
+    height: 30px;
+    padding: 0.5em;
+    font-size: 0.8rem;
+    border-radius: 5px;
+    border: 1px solid grey;
+    cursor: pointer;
+    font-family: 'Roboto', sans-serif;
 }
 
 .button_container button:nth-child(3) {
@@ -45,10 +51,13 @@
 
 .text_field div {
     font-size: 1rem;
+    font-family: 'Roboto', sans-serif;
     resize: none;
     cursor: text;
     box-sizing: border-box;
     border: 1.5px solid grey;
     height: 40px;
     width: 80%;
+    border-radius: 10px;
+    padding: 0.5em;
 }
